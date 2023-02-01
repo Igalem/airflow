@@ -1,0 +1,12 @@
+# Airflow configuration
+airflow.cfg
+
+# Airflow sqlite databases
+airflow.db
+unittests.db
+
+# Flask stuff:
+webserver_config.py
+
+# logs:
+/logs/
