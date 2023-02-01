@@ -9,4 +9,4 @@ unittests.db
 webserver_config.py
 
 # logs:
-/logs/
+logs/*
