@@ -9,4 +9,19 @@ unittests.db
 webserver_config.py
 
 # logs:
-logs/*
+logs/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# dotenv
+.env
+.autoenv*.zsh
+
+# virtualenv
+.venv*
+venv*
+ENV/
