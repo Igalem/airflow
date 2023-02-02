@@ -1,0 +1,9 @@
+default:
+  owner: 'Igal Emona'
+jira:
+  jira_conn_id: 'jira_default'
+s3:
+  s3_conn_id: 'aws_default'
+  s3_key: 'asascmme12323213'
+snowflake:
+  snowflake_conn_id: 'snowflake_default'

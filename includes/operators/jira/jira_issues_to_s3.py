@@ -8,7 +8,7 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.atlassian.jira.hooks.jira import JiraHook
 
 
-class JiraToS3Operator(BaseOperator):
+class JiraIssuesToS3Operator(BaseOperator):
     """
     Submits a Jira query and uploads the results to AWS S3.
     :param jql: The jql query to send to Jira.
@@ -74,10 +74,20 @@ class JiraToS3Operator(BaseOperator):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "jira_temp_file")
             issue_value = []
-
+            total_searched_issues = self._total_searched_issues(jira_hook=jira_hook,
+                                                jql=self.jql,
+                                                fields=fields,
+                                                startAt=self.startAt,
+                                                maxResults=self.maxResults)
+            self.log.info(f"Total issues found: {total_searched_issues}")
             with open(path, 'a+') as f:
-                while True:
-                    issues = jira_hook.search_issues(jql_str=self.jql, startAt=self.startAt, maxResults=self.maxResults, fields=fields, json_result=True)['issues']
+                while self.startAt < total_searched_issues:
+                    issues = self._search_issues(jira_hook=jira_hook,
+                                                jql=self.jql,
+                                                fields=fields,
+                                                startAt=self.startAt,
+                                                maxResults=self.maxResults)
+
                     self.log.info('Jira exporting data is in progress...')
                     if not issues:
                         break
@@ -87,11 +97,11 @@ class JiraToS3Operator(BaseOperator):
                             # get field key value
                             field_key = self.jira_fields[field_name]
                             # get issue values by field mapping
-                            field_values = self.get_field_values(row=issue['fields'], field_name=field_name,
-                                                                 field_key=field_key)
+                            field_values = self._get_field_values(row=issue['fields'], field_name=field_name,
+                                                                field_key=field_key)
                             # get string values from list type
                             issue_value.append(
-                                f"'{self.get_str_from_list(field_values=field_values, field_key=field_key)}'")
+                                f"'{self._get_str_from_list(field_values=field_values, field_key=field_key)}'")
 
                         f.write((','.join(issue_value)) + '\n')
                         issue_value = []
@@ -113,17 +123,26 @@ class JiraToS3Operator(BaseOperator):
 
             return s3_uri
 
-    def stringHandler(self, string=None):
+    def _total_searched_issues(self, jira_hook, jql, fields, startAt=0, maxResults=100, json_result=True):
+        total_issues = jira_hook.search_issues(jql_str=jql, startAt=startAt, maxResults=maxResults,
+                                        fields=fields, json_result=json_result)['total']
+        return int(total_issues)
+
+    def _search_issues(self, jira_hook, jql, fields, startAt=0, maxResults=100, json_result=True):
+        issues = jira_hook.search_issues(jql_str=jql, startAt=startAt, maxResults=maxResults,
+                                        fields=fields, json_result=json_result)['issues']
+        return issues
+
+    def _stringHandler(self, string=None):
         string = '' if string is None else string.replace("'", "")  # .replace('\r\n', '').replace('\n', '')
         return string
 
-    def get_field_values(self, row, field_name, field_key=None):
+    def _get_field_values(self, row, field_name, field_key=None):
         try:
             if isinstance(row[field_name], list):
                 field_values = row[field_name]
             elif field_key is not None:
                 field_values = str(row[field_name][field_key])
-
             else:
                 field_values = str(row[field_name])
         except:
@@ -131,13 +150,13 @@ class JiraToS3Operator(BaseOperator):
 
         return field_values
 
-    def get_str_from_list(self, field_values, field_key=None):
+    def _get_str_from_list(self, field_values, field_key=None):
         try:
             if isinstance(field_values, list):
                 field_str_list = [str(value[field_key]) for value in field_values]
-                return self.stringHandler(string=','.join(field_str_list))
+                return self._stringHandler(string=','.join(field_str_list))
             else:
-                return self.stringHandler(string=field_values)
+                return self._stringHandler(string=field_values)
         except:
             field_str_list = [str(value) for value in field_values]
-            return self.stringHandler(string=','.join(field_str_list))
+            return self._stringHandler(string=','.join(field_str_list))
