@@ -77,7 +77,9 @@ class JiraToS3Operator(BaseOperator):
 
             with open(path, 'a+') as f:
                 while True:
-                    issues = jira_hook.search_issues(jql_str=self.jql, startAt=self.startAt, maxResults=self.maxResults, fields=fields, json_result=True)['issues']
+                    ### Use this command for lower Jira provider versions: 
+                    #issues = jira_hook.search_issues(jql_str=self.jql, startAt=self.startAt, maxResults=self.maxResults, fields=fields, json_result=True)#['issues']
+                    issues = jira_hook.jql(jql=self.jql, start=self.startAt, limit=self.maxResults, fields=fields)['issues']
                     self.log.info('Jira exporting data is in progress...')
                     if not issues:
                         break

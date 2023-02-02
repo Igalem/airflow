@@ -1,8 +1,9 @@
 import yaml
+from includes.config.conf import ROOT_PATH
 
-# file = '/Users/igale/vsCode/airflow/includes/config/default.yml'
+conf_file = f"{ROOT_PATH}/includes/config/default.yml"
 
-def Parser(file):
+def Parser(file=conf_file):
     with open(file, 'r') as yamlfile:
         yamlLoader = yaml.load(yamlfile, Loader=yaml.FullLoader)
         yamlDictionary={}
@@ -13,3 +14,6 @@ def Parser(file):
                 yamlDictionary[key] = conf[key]
 
     return yamlDictionary
+
+if __name__=="__main__":
+    print('----', Parser())
