@@ -3,6 +3,7 @@ from includes.operators.jira.jira_to_s3 import JiraToS3Operator
 from airflow.operators.empty import EmptyOperator
 from datetime import datetime, date, timedelta
 from includes.config.yamlParser import Parser
+from includes.config.jira.jira_fields_list_dict import jira_fields_list
 import os
 
 defaults = Parser()
@@ -49,7 +50,7 @@ with DAG(dag_id=DAG_ID,
         s3_key=S3_KEY,
         replace=True,
         jira_connection_id=JIRA_CONNECTION_ID,
-        jira_fields=['created']
+        jira_fields=jira_fields_list
     )
 
     empty_end_task = EmptyOperator(task_id='end')
